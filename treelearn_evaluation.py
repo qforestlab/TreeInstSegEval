@@ -46,22 +46,6 @@ class TreeLearnEvaluation(BaseEvaluation):
             pc.point.instance = o3d.core.Tensor(arr[:, 3][..., np.newaxis])
 
             predictions = self.seperate_labeled_instances(pc, instance_label="instance", skip_instance=0)
-            print(len(predictions))
-            # with laspy.open(os.path.join(self.output_dir, "results",  "full_forest", self.dataset.lower()+"_test.laz")) as file:
-            #     las = file.read()
-            #     tree_ID = las.treeID
-            #     unique_IDS = np.unique(tree_ID)
-            #     predictions = []
-            #     offset_x, offset_y, offset_z = las.header.offsets
-            #     for id in unique_IDS:
-            #         if id == 0: # understory
-            #             continue
-            #         tree_points = las.points[las.treeID == id]
-            #         points = np.stack((tree_points.x - offset_x, tree_points.y - offset_y, tree_points.z - offset_z), axis=-1)
-
-            #         pc = o3d.t.geometry.PointCloud()
-            #         pc.point.positions = o3d.core.Tensor(points)
-            #         predictions.append(pc)
         else:
             if os.path.exists(os.path.join(self.output_dir, "all")):    
                 all_files = glob.glob(os.path.join(self.output_dir, "all", "*.npy"))
@@ -71,9 +55,6 @@ class TreeLearnEvaluation(BaseEvaluation):
                 subfolder3 = os.path.join(self.output_dir, "trunk_base_outside")
 
                 all_files = glob.glob(os.path.join(subfolder1, "*.npy")) + glob.glob(os.path.join(subfolder2, "*.npy")) + glob.glob(os.path.join(subfolder3, "*.npy"))
-
-            # NOTE: TEMP: read 2.npy so eval goes fast
-            # all_files = [os.path.join(self.output_dir, "all", "2.npy")]
 
             predictions = []
             for file in all_files:

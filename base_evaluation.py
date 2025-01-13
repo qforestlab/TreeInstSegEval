@@ -19,7 +19,7 @@ class BaseEvaluation():
         # check if dataset supported
         if dataset not in DATASETS:
             print(f"Dataset {dataset} not found in available datasets {DATASETS}")
-            print(f"If adding a new evaluation dataset, make sure BASE data is available at gt_dir/{dataset} and add the dataset to the list at the top of base_evaluation.py")
+            print(f"If adding a new evaluation dataset, make sure BASE data is available at BASE/{dataset} and add the dataset to the list at the top of base_evaluation.py")
             os._exit(1)
 
         # init variables
@@ -31,7 +31,6 @@ class BaseEvaluation():
         self.debug = debug
 
         # gt data
-        # TODO: check if all required folders in gt_dir/dataset?
         self.gt_dir = os.path.join(self.data_base_dir, "BASE", self.dataset)
         if not os.path.exists(self.gt_dir):
             print(f"Can't find ground truth folder {self.gt_dir}")
@@ -80,11 +79,6 @@ class BaseEvaluation():
     def read_gt(self, tile_name=None, thresholded=True):
         '''
             Read ground truth trees.
-
-            If a tile_name is provided, only reads this data for single tile
-            
-            If tiled, output is dict[tilename] = tile where tile is o3d instance
-            Otherwise, output is o3d instances of test, val and train plot
         '''
 
         source_dir = None
