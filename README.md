@@ -59,10 +59,10 @@ python <method_evaluation>.py
 --debug: if True, print debug information
 ```
 
-Evaluation results can be found at `base_dir\EVALUATION\<method>\<DATASET>`.
-    - plot_metrics.txt contain plot-level recall, precision and F1-score
-    - tree_level_metrics.txt contain tree-level recall, precision, F1 and IoU, averaged over succesfull predictions
-    - results_single_trees contains a folder for each succesfully detected tree (IoU > 0.5), with the corresponding TP, FN and FP point clouds and a .txt. with recall, precision, F1 and IoU values
+Evaluation results can be found at `base_dir\EVALUATION\<method>\<DATASET>`.  
+- plot_metrics.txt contain plot-level recall, precision and F1-score  
+- tree_level_metrics.txt contain tree-level recall, precision, F1 and IoU, averaged over succesfull predictions  
+- results_single_trees contains a folder for each succesfully detected tree (IoU > 0.5), with the corresponding TP, FN and FP point clouds and a .txt. with recall, precision, F1 and IoU values  
 
 
 ## Cite:
