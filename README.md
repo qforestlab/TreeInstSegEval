@@ -1,13 +1,12 @@
 # TLS forest instance segmentation benchmark
 
-Repository with code for evaluation of TLS forest instance segmentation methods, as used in the paper "Benchmarking tree instance segmentation of terrestrial laser scanning point clouds"
+Repository with code for evaluation of TLS forest instance segmentation methods, as used in the paper "Benchmarking tree instance segmentation of terrestrial laser scanning point clouds".
 
 ## Benchmark setup
 
 ### Data
 
 Benchmark data can be downloaded here [TODO]
-Additionally, new data can be evaluated by structuring
 
 Make sure data is structured as follows:
 
@@ -37,6 +36,7 @@ Make sure data is structured as follows:
             └─  <DATASET>
                 └─  output files
 ```
+If evaluating on new data, structure as above and add dataset name to the DATASETS list in base_evaluation.py.
 
 ### Code
 
@@ -52,13 +52,11 @@ Evaluating other methods is relatively easy:
 Run evaluation using:
 ```
 python <method_evaluation>.py 
-
 --data_base_dir: location of base directory containing input and output data
 --dataset: name of dataset
 --cache_calculations: if True, will cache IoU calculations
 --use_cached_calculations: if True, use cached calculations
 --debug: if True, print debug information
-
 ```
 
 Evaluation results can be found at `base_dir\EVALUATION\<method>\<DATASET>`.
