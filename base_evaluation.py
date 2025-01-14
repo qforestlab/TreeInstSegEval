@@ -76,23 +76,19 @@ class BaseEvaluation():
         self.prepare_inputs()
 
 
-    def read_gt(self, tile_name=None, thresholded=True):
+    def read_gt(self, thresholded=True):
         '''
             Read ground truth trees.
         '''
 
-        source_dir = None
-        if tile_name is not None:
-            source_dir = os.path.join(self.gt_dir, "trees", "test", tile_name)
-        else:
-            source_dir = os.path.join(self.gt_dir, "test_trees_thresholded")
+        source_dir = os.path.join(self.gt_dir, "test")
 
         if not os.path.exists(source_dir):
-            print(f"Couldn't find path {dir}")
+            print(f"Couldn't find gt source path {dir}")
             return
         
         # we read in bbox of entire test_area, as some eval trees have small part outside area that can never be part of prediction so should be cut of
-        test_area = o3d.t.io.read_point_cloud(os.path.join(self.gt_dir, self.dataset.lower() + "_test_merged.ply"))
+        test_area = o3d.t.io.read_point_cloud(os.path.join(self.gt_dir, self.dataset.lower() + "_test.ply"))
         bbox_test_area = test_area.get_axis_aligned_bounding_box()
         
         if not thresholded: # shouldn't really ever be used, maybe for test
@@ -125,26 +121,7 @@ class BaseEvaluation():
             return trees_eval, trees_non_eval, tree_names
 
     def read_output(self, debug=False):
-        print("ERROR: reading output is method dependent and should be defined in each method")
-        raise NotImplementedError("read_output is method-specific")
-
-        if debug:
-            print("WARNING: reading output is method-specific and not implemented!!")
-            print("For debugging using base method, we read in ground truth test trees")
-
-            trees_dir = os.path.join(self.gt_dir, "trees")
-
-            test_trees_dir = os.path.join(trees_dir, "test")
-
-            out_test = {}
-            for file in glob.glob(os.path.join(test_trees_dir, "*.ply")):
-                tn = os.path.splitext(os.path.basename(file))
-                out_test[tn] = o3d.t.io.read_point_cloud(file)
-
-            return out_test
-        else:
-            print("ERROR: reading output is method dependent and should be defined in each method")
-            raise NotImplementedError("read_output is method-specific")
+        raise NotImplementedError("read_output is method-specific, implement in inheriting class!")
 
     def prepare_inputs(self):
         print("Reading predictions")
@@ -194,7 +171,8 @@ class BaseEvaluation():
 
         instances = []
         for color in unique_colors:
-            # color 0,0,0 are all points classified as non-instances NOTE: this is for raycloudtools, might be different for other methods, give as arguments
+            # color 0,0,0 are all points classified as non-instances
+            # NOTE: this is for raycloudtools, might be different for other methods, TODO give as arguments
             if remove_zero and (color == np.array([0,0,0])).all():
                 continue
 
@@ -207,6 +185,7 @@ class BaseEvaluation():
         return instances
 
     def read_cached_predictions(self):
+        # read in predictions, sorted in same way they were written in so IoU cache works as well
         regex = re.compile(r'\d+')
         prediction_files = sorted(glob.glob(os.path.join(self.prediction_cache_dir, "*.ply")), key=lambda x:int(regex.findall(x)[-1]))
         print(f"Reading {len(prediction_files)} predictions from {self.prediction_cache_dir}")
@@ -328,11 +307,7 @@ class BaseEvaluation():
 
         self.get_tree_metrics(tp_predictions, tp_gt, odir=odir, print_metrics=self.debug)
 
-        # 6. Debug: Visualize particular trees or plots
-
-        # self.scatter_height_IoU(self.predictions, self.gt_eval, IoU_arr, hungarian_matching)
-
-        # PLAN: for each succesfull prediction: save point cloud of TP, FP and FN so we can calculate metrics by height
+        # for each succesfull prediction: save point cloud of TP, FP and FN so we can calculate metrics by height
         odir_trees = os.path.join(odir, "results_single_trees")
         if not os.path.exists(odir_trees):
             os.mkdir(odir_trees)
@@ -340,6 +315,8 @@ class BaseEvaluation():
 
         return
 
+
+    # MATCHING
 
     def calculate_IoU(self, predictions, gt_instances, debug):
         '''
@@ -475,10 +452,7 @@ class BaseEvaluation():
 
         Recall = len(tp_predictions) / (len(tp_predictions) + len(fn_gt))
         Precision = len(tp_predictions) / (len(tp_predictions) + len(fp_predictions))
-
         F1 = 2 * (Precision * Recall) / (Precision + Recall)
-
-        # IoU: should be calculated in tree-level metrics together with mPrec, mRec, mF1
 
         if print_metrics:
             print("")
@@ -608,9 +582,10 @@ class BaseEvaluation():
         return acc, prec, rec, f1, iou, fp_error_rate, fn_error_rate
 
 
-    # BELOW: helper functions
+    # HELPER FUNCTIONS
+
     def overlap_points(self, points_pred, points_gt):
-        # We check overlap by rounding to 2 decimals, not ideal but works for comparing floats
+        # overlap is compared to 1 cm accuracy
 
         # Two magic functions to be able to check the overlap between pointclouds
         def view1D(a, b): # a, b are arrays
@@ -636,7 +611,7 @@ class BaseEvaluation():
         '''
             Args: o3d.t.geometry.AxisAlignedBoundingBox
 
-            Returns True if bboxs overlap
+            Returns True if bboxs overlap, used to speed up IoU calculation
         '''
         idx_tensor = bbox_1.get_point_indices_within_bounding_box(bbox_2.get_box_points())
         idx_tensor2 = bbox_2.get_point_indices_within_bounding_box(bbox_1.get_box_points())
@@ -698,50 +673,6 @@ class BaseEvaluation():
         
         return
 
-    # VISUALIZATION
-
-    def scatter_height_IoU(self, predictions, gt_eval_instances, IoU_arr, hungarian_matching, odir=None):
-        print("Building scatterplot of height vs IoU")
-        height_array_gt = []
-        height_array_predictions = []
-        IoU_array = []
-
-        hung_row_ind, hung_col_ind = hungarian_matching
-
-        for i, row_idx in enumerate(hung_row_ind):
-            column_idx = hung_col_ind[i]
-
-            IoU = IoU_arr[row_idx][column_idx]
-            IoU_array.append(IoU)
-
-            gt_instance = gt_eval_instances[column_idx]
-            height_array_gt.append(self.get_height(gt_instance))
-
-            prediction = predictions[row_idx]
-            height_array_predictions.append(self.get_height(prediction))
-
-
-        # this does nothing if the number of predictions is larger then the number of trees
-        for i in range(len(gt_eval_instances)):
-            if i not in hung_col_ind:
-                IoU_array.append(0.0)
-                instance = gt_eval_instances[i]
-                height_array_gt.append(self.get_height(instance))
-
-        # TODO: TEMP write arrays to file for quick plot development in seperate scripts
-        np.save("height_gt.npy", np.array(height_array_gt))
-        np.save("height_array_predictions.npy", np.array(height_array_predictions))
-        np.save("IoU_array.npy", np.array(IoU_array))
-
-        plt.scatter(height_array_gt, IoU_array, c="green")
-        plt.scatter(height_array_predictions, IoU_array[:len(height_array_predictions)], c="red")
-        plt.show()
-        
-        return
-
-    def get_height(self, instance):
-        # assumes no outliers
-        return instance.get_max_bound().numpy()[2] - instance.get_min_bound().numpy()[2]
 
 
 if __name__=="__main__":
