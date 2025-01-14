@@ -13,24 +13,18 @@ class TreeIsoEvaluation(BaseEvaluation):
         super(TreeIsoEvaluation, self).__init__(data_base_dir, dataset, use_cached_calculations, cache_calculations, debug)
         return
 
-
     def read_output(self):
         '''
             Read output TreeIso Seg method
-
-            Output format TreeIso Seg:
-                Single ply with instances marked by final segs
+            Output format TreeIso Seg: Single ply with instances under 'scalar_final_segs'
 
             Output format:
                 [tree1, tree2, ...] where treen is an o3d instance of tree
         '''
-
         input_file = os.path.join(self.output_dir, self.output_file)
-        
         input_pc = o3d.t.io.read_point_cloud(input_file)
 
         predictions = self.seperate_labeled_instances(input_pc, instance_label="scalar_final_segs")
-
         return predictions
 
 if __name__ == "__main__":

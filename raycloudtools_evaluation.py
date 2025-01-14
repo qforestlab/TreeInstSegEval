@@ -17,14 +17,11 @@ class RayCloudToolsEvaluation(BaseEvaluation):
     def read_output(self):
         '''
             Read output RayCloudTools
-
-            Output format RayCloudTools:
-                single ply with colored instances, color (0,0,0) is ground
+            Output format RayCloudTools: single ply with colored instances, color (0,0,0) is ground
 
             Output format:
                 [tree1, tree2, ...] where treen is an o3d instance of tree
         '''
-
         # use cached predictions if enabled and present
         self.prediction_cache_dir = os.path.join(self.calculation_cache_dir, "predictions", self.dataset, self.method)
         if self.use_cached_calculations:
@@ -34,9 +31,8 @@ class RayCloudToolsEvaluation(BaseEvaluation):
                 return self.read_cached_predictions()
         
         # if not cached, read in predictions
-        FILENAME = self.dataset.lower() + "_test_merged_raycloud_segmented.ply"
+        FILENAME = self.dataset.lower() + "_test_raycloud_segmented.ply"
         input_file = os.path.join(self.output_dir, FILENAME)
-
         input_pc = o3d.t.io.read_point_cloud(input_file)
 
         predictions = self.seperate_colored_instances(input_pc, remove_zero=True)
@@ -45,7 +41,6 @@ class RayCloudToolsEvaluation(BaseEvaluation):
             self.cache_predictions(predictions)
         
         return predictions
-
 
 if __name__ == "__main__":
     Fire(RayCloudToolsEvaluation)

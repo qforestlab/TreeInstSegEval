@@ -22,10 +22,9 @@ class TreeLearnEvaluation(BaseEvaluation):
     def read_output(self):
         '''
             Read output TreeLearn
-
             Output format TreeLearn:
-
-                plot las file with tree_ID labels
+                old version: seperate .npy files with trees
+                new version: single .npy file with format x,y,z,instance, instance=0 is ground
 
             Output format:
                 [tree1, tree2, ...] where treen is an o3d instance of tree
@@ -69,7 +68,6 @@ class TreeLearnEvaluation(BaseEvaluation):
             self.cache_predictions(predictions)
 
         return predictions
-
 
 if __name__ == "__main__":
     Fire(TreeLearnEvaluation)
